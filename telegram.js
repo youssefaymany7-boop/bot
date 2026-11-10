@@ -16,8 +16,8 @@ const __dir = path.dirname(fileURLToPath(import.meta.url))
 // ───────────────────────── الإعدادات ─────────────────────────
 const CONFIG_FILE = path.join(__dir, 'config.json')
 const TEMPLATE = {
-  telegramToken: '9038686507:AAH0JQ4Jn4KgvAM2pcj2cKu4rh7e6xKSXOI',
-  adminIds: ['1879155157'],
+  telegramToken: 'ضع_توكن_البوت_هنا',
+  adminIds: ['ضع_معرفك_الرقمي_هنا'],
   adminContact: '',
   maxSessionsPerUser: 1,
   maxTotalSessions: 15,
@@ -87,7 +87,7 @@ function acquireLock() {
     if (fs.existsSync(LOCK_FILE)) {
       const oldPid = Number(fs.readFileSync(LOCK_FILE, 'utf8').trim())
       let alive = false
-      try { process.kill(oldPid, 0); alive = true } catch { alive = false } // لا يقتل العملية، فقط يفحص وجودها
+      try { process.kill(oldPid, 0); alive = true } catch { alive = false }
       if (alive && oldPid !== process.pid) {
         console.log(`❌ في نسخة تانية من المدير شغّالة بالفعل على هذا الجهاز (PID ${oldPid}).`)
         console.log('   اقفلها الأول (من الطرفية اللي شغّالة فيها، أو من Task Manager) ثم شغّل تاني.')
@@ -116,8 +116,8 @@ let store = { users: {}, sessions: {}, codes: {}, cmdrules: {}, adminWa: {}, set
 try { if (fs.existsSync(STORE_FILE)) store = { ...store, ...JSON.parse(fs.readFileSync(STORE_FILE, 'utf8')) } catch { }
 store.users ||= {}; store.sessions ||= {}; store.codes ||= {}
 store.cmdrules = { ...(store.cmdrules || {}) }
-store.adminWa = { ...(store.adminWa || {}) } // رقم الواتساب الشخصي لكل أدمن — بيترقّى من صلاحية الجلسة
-store.unlinkReqs = { ...(store.unlinkReqs || {}) } // طلبات فك الرابط في انتظار موافقة الأدمن
+store.adminWa = { ...(store.adminWa || {}) }
+store.unlinkReqs = { ...(store.unlinkReqs || {}) }
 store.settings = { paid: false, ...(store.settings || {}) }
 const saveStore = () => {
   try {
@@ -139,7 +139,6 @@ const MIN = 60_000, HOUR = 3_600_000, DAY = 86_400_000
 const pad = (n) => String(n).padStart(2, '0')
 const fmtDate = (t) => new Date(t).toLocaleString('en-GB', { timeZone: TZ_NAME, day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
 
-// مدة مختصرة: أكبر وحدتين (مثلًا «12 يوم و 5 ساعة»)
 function fmtShort(ms) {
   ms = Math.max(0, ms)
   const d = Math.floor(ms / DAY), h = Math.floor((ms % DAY) / HOUR), m = Math.floor((ms % HOUR) / MIN), s = Math.floor((ms % MIN) / 1000)
@@ -150,7 +149,6 @@ function fmtShort(ms) {
   if (!parts.length) parts.push(`${s} ثانية`)
   return parts.slice(0, 2).join(' و ')
 }
-// عد تنازلي كامل
 function fmtClock(ms) {
   ms = Math.max(0, ms)
   const d = Math.floor(ms / DAY), h = Math.floor((ms % DAY) / HOUR), m = Math.floor((ms % HOUR) / MIN), s = Math.floor((ms % MIN) / 1000)
@@ -160,7 +158,6 @@ const bar = (frac, n = 12) => {
   const f = Math.round(Math.min(1, Math.max(0, frac)) * n)
   return '▰'.repeat(f) + '▱'.repeat(n - f)
 }
-// وصف مدة الكود (بالدقائق في callback_data)
 function spanLabel(ms) {
   if (ms === null) return '♾ دائم'
   const d = ms / DAY
@@ -170,7 +167,6 @@ function spanLabel(ms) {
   return fmtShort(ms)
 }
 
-// تحليل مدة يكتبها المسؤول: «45» (أيام) / «12h» / «3 شهور» / «30 يوم» / «دائم». يرجع ms أو null (دائم) أو undefined (خطأ)
 function parseDuration(raw) {
   const t = toEnDigits(String(raw ?? '').trim().toLowerCase())
   if (['perm', 'permanent', 'forever', 'lifetime', 'دائم', 'دائما', 'دائمة', 'دايم', 'مدى الحياة'].includes(t)) return null
@@ -207,7 +203,6 @@ async function tg(method, params = {}, timeoutMs = 30_000) {
 }
 const send = (chat_id, text, extra = {}) =>
   tg('sendMessage', { chat_id, text, parse_mode: 'HTML', disable_web_page_preview: true, ...extra }).catch((e) => { log('⚠️ إرسال:', e.message); return null })
-// التعديل بنفس المحتوى (message is not modified) يُعتبر نجاحًا
 const edit = (chat_id, message_id, text, extra = {}) =>
   tg('editMessageText', { chat_id, message_id, text, parse_mode: 'HTML', disable_web_page_preview: true, ...extra })
     .catch((e) => (/not modified/i.test(e.message) ? true : null))
@@ -217,7 +212,6 @@ const editCaption = (chat_id, message_id, caption, extra = {}) =>
 const del = (chat_id, message_id) => tg('deleteMessage', { chat_id, message_id }).catch(() => null)
 const answer = (id, text = '', alert = false) => tg('answerCallbackQuery', { callback_query_id: id, text, show_alert: alert }).catch(() => null)
 const kb = (rows) => ({ reply_markup: { inline_keyboard: rows.filter((r) => r.length) } })
-// style: primary (أزرق) / success (أخضر) / danger (أحمر) — تظهر في تطبيقات تليجرام الحديثة، والقديمة تتجاهلها
 const btn = (text, data, style) => ({ text, callback_data: data, ...(style ? { style } : {}) })
 const urlBtn = (text, url, style) => ({ text, url, ...(style ? { style } : {}) })
 const contactRow = () => {
@@ -227,7 +221,6 @@ const contactRow = () => {
   return row
 }
 
-// ── إرسال صورة (multipart، بدون أي مكتبات إضافية) + تخزين file_id لإعادة الاستخدام بسرعة ──
 async function tgMultipart(method, fields, fileField, filePath, timeoutMs = 30_000) {
   const ctl = new AbortController()
   const t = setTimeout(() => ctl.abort(), timeoutMs)
@@ -243,7 +236,6 @@ async function tgMultipart(method, fields, fileField, filePath, timeoutMs = 30_0
   } finally { clearTimeout(t) }
 }
 
-// صور الواجهات من مجلد media: الأولى = الرئيسية، الثانية = لوحة الأدمن، الثالثة = شاشة الاشتراك
 const IMGS = (() => {
   try {
     const dir = path.join(__dir, 'media')
@@ -275,7 +267,6 @@ async function sendPhotoScreen(chat_id, img, caption, extra = {}) {
   }
 }
 
-// شاشة = { text, extra, photo? } — show يعدّل الرسالة الحالية في مكانها (بدون وميض) كلما أمكن
 async function show(chatId, mid, scr, curIsPhoto = false) {
   const { text, extra = {}, photo = null } = scr
   if (mid) {
@@ -288,17 +279,15 @@ async function show(chatId, mid, scr, curIsPhoto = false) {
 const midOf = (r, fallback) => (r && typeof r === 'object' ? r.message_id : fallback)
 
 // ───────────────────────── تشغيل الجلسات ─────────────────────────
-// runtime: sid → { child, state: 'starting'|'pairing'|'online', codes, codeMsgId, timers, stopping, restarts[] }
 const runtime = new Map()
 const lastLink = { user: new Map(), number: new Map() }
-const awaiting = new Map() // userId → { type: 'number'|'code'|'custom', at }
-const restartLog = new Map() // sid → [timestamps]
-const badCodes = new Map() // userId → { n, until }
-const tickers = new Map() // userId → { timer, chatId, mid, until, fails }
+const awaiting = new Map()
+const restartLog = new Map()
+const badCodes = new Map()
+const tickers = new Map()
 
-// ── طلبات IPC للجلسات (عرض الجروبات / الترقية) ──
-const pendingIPC = new Map() // reqId → { resolve, timer }
-const groupsCache = new Map() // sid → { list, at }
+const pendingIPC = new Map()
+const groupsCache = new Map()
 function childReq(sid, msg, timeoutMs = 25_000) {
   const rt = runtime.get(sid)
   if (!rt?.child) return Promise.reject(new Error('الجلسة دي مش شغّالة'))
@@ -315,14 +304,12 @@ const userSessions = (tgId) => Object.values(store.sessions).filter((s) => s.tgI
 
 // ───────────────────────── الاشتراكات ─────────────────────────
 const isPaid = () => !!store.settings.paid
-// الاشتراك الفعّال (أو null). expiresAt === null يعني دائم.
 function subOf(uid) {
   const s = store.users[String(uid)]?.sub
   if (!s) return null
   if (s.expiresAt === null || s.expiresAt > Date.now()) return s
   return null
 }
-// المسؤول دائمًا مسموح، والباقي: لو البوت مجاني أو عنده اشتراك فعّال
 const hasAccess = (uid) => isAdmin(uid) || !isPaid() || !!subOf(uid)
 
 const statusOf = (s) => {
@@ -334,7 +321,6 @@ const statusOf = (s) => {
   return { icon: '🔴', text: 'متوقفة' }
 }
 
-// إيقاف جلسات من لا يملك صلاحية (لا تُحذف، وتشتغل تلقائيًا بمجرد الاشتراك)
 async function enforceAccess() {
   for (const s of Object.values(store.sessions)) {
     if (hasAccess(s.tgId) || !runtime.has(s.id)) continue
@@ -342,7 +328,6 @@ async function enforceAccess() {
     else await stopProcess(s.id)
   }
 }
-// تشغيل الجلسات المربوطة اللي كانت موقوفة بسبب الاشتراك (لمستخدم واحد أو للجميع)
 async function resumeAccess(uid = null) {
   for (const s of Object.values(store.sessions)) {
     if (uid && s.tgId !== String(uid)) continue
@@ -352,8 +337,6 @@ async function resumeAccess(uid = null) {
     await sleep(1200)
   }
 }
-
-// إلغاء الاشتراك = إلغاء جلسات صاحبه (حذف + فصل الجهاز من واتساب لو الجلسة شغّالة)
 async function cancelUserSessions(uid) {
   const list = userSessions(uid)
   for (const s of list) await destroySession(s.id, { logout: s.status === 'linked' && runtime.has(s.id) })
@@ -366,7 +349,7 @@ function applySub(uid, durationMs, source) {
   const cur = subOf(uid)
   if (durationMs === null) u.sub = { startedAt: now, expiresAt: null, totalMs: null, source }
   else {
-    const base = cur && cur.expiresAt !== null ? cur.expiresAt : now // التجديد يُضاف على المتبقي
+    const base = cur && cur.expiresAt !== null ? cur.expiresAt : now
     u.sub = { startedAt: now, expiresAt: base + durationMs, totalMs: base + durationMs - now, source }
   }
   delete u.lastExpiredAt
@@ -374,7 +357,7 @@ function applySub(uid, durationMs, source) {
   return u.sub
 }
 
-const CODE_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789' // بدون أحرف متشابهة (0/O و 1/I/L)
+const CODE_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 function genCode() {
   for (;;) {
     const b = crypto.randomBytes(12)
@@ -390,7 +373,6 @@ function normalizeCode(raw) {
   const body = a.startsWith('CMD') && a.length === 15 ? a.slice(3) : a.length === 12 ? a : null
   return body ? `CMD-${body.slice(0, 4)}-${body.slice(4, 8)}-${body.slice(8)}` : s.trim()
 }
-// يُعتبر كود فقط لو بادئ بـ CMD (عشان أرقام التليفون ما تتفهمش غلط كأكواد)
 const looksLikeCode = (raw) => /^CMD[A-Z0-9]{12}$/.test(toEnDigits(raw).toUpperCase().replace(/[^A-Z0-9]/g, ''))
 
 function redeemCode(uid, raw) {
@@ -426,9 +408,7 @@ async function sweepExpiry() {
     if (!s || s.expiresAt === null) continue
     if (s.expiresAt <= now) {
       u.sub = null; u.lastExpiredAt = now; changed = true
-      if (isPaid() && !isAdmin(u.id)) {
-        expiredNow.push(u)
-      }
+      if (isPaid() && !isAdmin(u.id)) expiredNow.push(u)
     } else if (!s.warned && s.expiresAt - now <= DAY && (s.totalMs || 0) > 2 * DAY) {
       s.warned = true; changed = true
       if (isPaid() && !isAdmin(u.id)) send(u.id, `⏰ <b>تنبيه:</b> اشتراكك هيخلص بعد <b>${fmtShort(s.expiresAt - now)}</b>.\nجدّل قبل ما يخلص، لأن لما ينتهي الاشتراك بتتلغى جلستك.`,
@@ -444,7 +424,6 @@ async function sweepExpiry() {
   }
 }
 
-// ── عد تنازلي حي: يعدّل رسالة الاشتراك كل كام ثانية لفترة قصيرة بعد فتحها ──
 function stopTicker(uid) {
   const t = tickers.get(uid)
   if (t) { clearInterval(t.timer); tickers.delete(uid) }
@@ -477,7 +456,7 @@ function spawnSession(sid) {
   const logStream = fs.createWriteStream(logFile, { flags: 'a' })
 
   const env = { ...process.env }
-  delete env.TELEGRAM_TOKEN // الجلسات لا ترى توكن تليجرام أبدًا
+  delete env.TELEGRAM_TOKEN
   Object.assign(env, {
     MR_JOO_CHILD: '1',
     SESSION_DIR: path.join(dir, 'session'),
@@ -492,7 +471,6 @@ function spawnSession(sid) {
   const child = fork(SESSION_SCRIPT, [], { env, stdio: ['ignore', 'pipe', 'pipe', 'ipc'], cwd: __dir })
   child.stdout.pipe(logStream, { end: false })
   child.stderr.pipe(logStream, { end: false })
-  // مزامنة قواعد تحكم الأوامر فور تشغيل الجلسة (لو العضو عنده قواعد مضبوطة)
   const cmdRules = store.cmdrules[s.tgId]
   if (cmdRules && (cmdRules.def === 'block' || Object.keys(cmdRules.rules || {}).length)) {
     try { child.send({ type: 'cmdrules', rules: cmdRules }) } catch { }
@@ -507,7 +485,6 @@ function spawnSession(sid) {
 }
 
 async function onChildMessage(sid, msg) {
-  // ردود طلبات IPC (عرض الجروبات / الترقية) — بتُحلّ الوعد الخاص بيها فور وصولها
   if (msg?.type === 'ipcres') {
     const p = pendingIPC.get(msg.reqId)
     if (p) { clearTimeout(p.timer); pendingIPC.delete(msg.reqId); p.resolve(msg.data) }
@@ -552,7 +529,6 @@ async function onChildMessage(sid, msg) {
     rt.stopping = true
     await send(s.chatId, `⚠️ تم فصل الجهاز من واتساب (رقم <b>+${esc(s.number)}</b>) فتم حذف الجلسة.\nتقدر تربط من جديد في أي وقت.`,
       kb([[btn('🔗 ربط رقم جديد', 'link', 'primary')]]))
-    // إشعار فوري لكل الأدمن — الفك من واتساب بيحصل على موبايل العضو مباشرة فمفيش موافقة ممكنة قبله، ده بلاغ بعد الحدوث
     const u = store.users[s.tgId]
     for (const a of ADMIN_IDS) {
       send(a,
@@ -577,7 +553,6 @@ async function onChildExit(sid, code) {
 
   if (s.status === 'pending') return failPending(sid, 'حصل خطأ أثناء الاتصال بواتساب.')
 
-  // تعطّل غير متوقع: أعد التشغيل (حد أقصى 5 مرات كل 10 دقائق)
   const now = Date.now()
   const hist = (restartLog.get(sid) || []).filter((t) => now - t < 600_000)
   if (hist.length >= 5) {
@@ -621,7 +596,6 @@ async function destroySession(sid, { logout = true } = {}) {
   await stopProcess(sid, { logout: logout && s?.status === 'linked' })
   runtime.delete(sid)
   delete store.sessions[sid]
-  // شيل أي طلب فك ربط معلّق للجلسة دي (اتنفذ من مسار تاني)
   for (const [k, v] of Object.entries(store.unlinkReqs || {})) if (v.sid === sid) delete store.unlinkReqs[k]
   saveStore()
   try { fs.rmSync(sessionDir(sid), { recursive: true, force: true }) } catch { }
@@ -631,7 +605,7 @@ async function destroySession(sid, { logout = true } = {}) {
 // ───────────────────────── ربط رقم جديد ─────────────────────────
 function normalizeNumber(raw) {
   let n = String(raw).replace(/[\s\-()+]/g, '')
-  n = toEnDigits(n) // أرقام عربية/هندية → إنجليزية
+  n = toEnDigits(n)
   if (!/^\d+$/.test(n)) return null
   if (n.startsWith('00')) n = n.slice(2)
   else if (n.startsWith('0') && DEFAULT_CC) n = DEFAULT_CC + n.slice(1)
@@ -697,8 +671,7 @@ const helpText =
   `🔒 إحنا مبنطلبش أي كلمة سر، وتقدر تفصل الجهاز في أي وقت من واتساب أو من هنا.</blockquote>\n` +
   `أوامر: /start /link /sessions /sub /code /cancel /id`
 
-// ───────────────────────── 🌐 رابط البوت المباشر للربط ─────────────────────────
-let BOT_USERNAME = null // اسم المستخدم بتاع بوت تليجرام (بيتملي من getMe)
+let BOT_USERNAME = null
 
 function botLinkScreen() {
   const link = BOT_USERNAME ? `https://t.me/${BOT_USERNAME}?start=link` : null
@@ -719,7 +692,6 @@ function botLinkScreen() {
   }
 }
 
-// ───────────────────────── 🔓 طلبات فك الرابط (موافقة الأدمن أولًا) ─────────────────────────
 function unlinkReqsScreen() {
   const reqs = Object.values(store.unlinkReqs).sort((a, b) => b.at - a.at)
   let text = `🔓 <b>طلبات فك الرابط</b> (${reqs.length})\n${LINE}\n`
@@ -767,7 +739,6 @@ function homeScreen(user) {
   }
 }
 
-// شاشة «البوت باشتراك» للي مالوش اشتراك فعّال
 function gateScreen(uid) {
   const expired = store.users[String(uid)]?.lastExpiredAt
   const text =
@@ -791,7 +762,6 @@ const codePromptScreen = () => ({
   extra: kb([[btn('↩️ رجوع', 'home')]]),
 })
 
-// شاشة اشتراكي — بعد تنازلي حي
 function subScreen(uid, header = '') {
   const u = store.users[String(uid)]
   const s = subOf(uid)
@@ -986,11 +956,7 @@ function adminUsersView() {
   return { text, extra: kb([[btn('⬅️ رجوع', 'a:panel')]]) }
 }
 
-// ───────────────────────── 🎛️ تحكم الأوامر (لكل عضو على حدة) ─────────────────────────
-// store.cmdrules[tgId] = { def: 'allow'|'block', rules: { [أمر]: { mode: 'allow'|'block', until: timestamp|null } } }
-//   def   = سلوك الأوامر غير المضبوطة: مفتوح (الكل شغّال) أو مقفول (السماح فقط)
-//   rules = استثناءات لكل أمر بمدة صلاحية، تنتهي تلقائيًا وتُطبَّق فورًا على جلسة العضو
-const pendingCmd = new Map() // adminId → { tgId, cmd, mode }
+const pendingCmd = new Map()
 
 const cmdRulesOf = (tgId) => (store.cmdrules[tgId] ||= { def: 'allow', rules: {} })
 const liveCmdRules = (tgId) => {
@@ -999,7 +965,6 @@ const liveCmdRules = (tgId) => {
   return { def: r.def, entries: Object.entries(r.rules || {}).filter(([, v]) => !v.until || v.until > now) }
 }
 
-// إرسال القواعد لجلسات العضو الشغّالة — بتوصل فورًا من غير ريستارت
 function pushCmdRules(tgId) {
   const rules = cmdRulesOf(tgId)
   for (const s of userSessions(tgId)) {
@@ -1088,7 +1053,6 @@ function cmdDurScreen(uid) {
   }
 }
 
-// تطبيق القاعدة النهائية + إشعار العضو + رجوع لشاشته
 function finishCmdRule(uid, chatId, p, ms) {
   pendingCmd.delete(uid); awaiting.delete(uid)
   const rule = applyCmdRule(p.tgId, p.cmd, p.mode, ms)
@@ -1097,7 +1061,6 @@ function finishCmdRule(uid, chatId, p, ms) {
 }
 
 // ───────────────────────── 📋 عرض الجروبات + 👑 الترقية ─────────────────────────
-// ترجمة أخطاء واتساب الشهيرة لرسائل مفهومة
 function explainWgErr(err) {
   const t = String(err || '')
   if (/participant/i.test(t)) return '🚫 الرقم ده مش موجود في الجروب — لازم يكون عضو فيه الأول.'
@@ -1106,7 +1069,6 @@ function explainWgErr(err) {
   return '🚫 فشلت الترقية: <code>' + esc(t) + '</code>'
 }
 
-// توضيح لما رقم الجلسة يكون عضو عادي في الجروب (مفيش صلاحية ترقية هناك)
 function memberExplain(s, g) {
   return (
     `🚫 <b>مفيش صلاحية في الجروب ده</b>\n${LINE}\n` +
@@ -1125,7 +1087,7 @@ function groupsSessionsScreen() {
   return { text, extra: kb(rows) }
 }
 
-const GROUPS_PER_PAGE = 25 // 25 جروب في الصفحة (كل الجروبات بتظهر — بتتنقل بالصفحات)
+const GROUPS_PER_PAGE = 25
 
 function groupsScreen(sid, page = 0) {
   const s = store.sessions[sid]
@@ -1143,7 +1105,6 @@ function groupsScreen(sid, page = 0) {
   shown.forEach((g, i) => { text += `${start + i + 1}. ${g.role === 'member' ? '👤' : '👑'} ${esc(g.name)} — ${g.size} عضو\n` })
   if (!shown.length) text += '<blockquote>الحساب ده مش في أي جروب.</blockquote>\n'
   for (let i = 0; i < shown.length; i += 4) rows.push(shown.slice(i, i + 4).map((g, j) => btn(String(g.name).slice(0, 24), `a:gg:${sid}:${start + i + j}`)))
-  // التنقل بين الصفحات — كل الأزرار بتشاور على رقم الجروب في القايمة الكاملة فمفيش خبط
   if (pages > 1) {
     const nav = []
     if (page > 0) nav.push(btn('⬅️ السابق', `a:gpage:${sid}:${page - 1}`))
@@ -1186,7 +1147,6 @@ async function showGroupsList(chatId, mid, sid, isPhoto) {
   await show(chatId, mid, { text: `⏳ جارٍ جلب جروبات <b>${mask(s.number)}</b> من واتساب...` }, isPhoto)
   const r = await childReq(sid, { type: 'listgroups' }).catch((e) => ({ ok: false, error: e.message }))
   if (!r?.ok) return send(chatId, `❌ تعذر جلب الجروبات: ${esc(r?.error || 'خطأ غير معروف')}`, kb([[btn('🔁 حاول تاني', `a:groups:${sid}`), btn('⬅️ رجوع', 'a:panel')]]))
-  // الترتيب مرة واحدة قبل التخزين: الأعلى صلاحية فوق — عشان أرقام الأزرار تطابق القايمة المعروضة بالظبط
   const rank = { superadmin: 2, admin: 1, member: 0 }
   const list = [...(r.groups || [])].sort((a, b) => (rank[b.role] || 0) - (rank[a.role] || 0) || String(a.name).localeCompare(String(b.name), 'ar'))
   groupsCache.set(sid, { list, at: Date.now() })
@@ -1207,7 +1167,7 @@ function rememberUser(from) {
 async function doRedeem(user, chatId, raw, userMsgId) {
   const uid = String(user.id)
   awaiting.delete(uid)
-  if (userMsgId) del(chatId, userMsgId) // نمسح رسالة الكود من الشات
+  if (userMsgId) del(chatId, userMsgId)
   const res = redeemCode(uid, raw)
   if (!res.ok) {
     return send(chatId, res.text, kb([[btn('🎟 حاول تاني', 'code', 'primary')], contactRow(), [btn('🏠 الرئيسية', 'home')]]))
@@ -1220,7 +1180,6 @@ async function doRedeem(user, chatId, raw, userMsgId) {
   }
 }
 
-// ── أوامر المسؤول ──
 async function adminCommand(cmd, arg, user, chatId) {
   const uid = String(user.id)
   if (cmd === 'admin') return show(chatId, null, panelScreen())
@@ -1249,7 +1208,7 @@ async function adminCommand(cmd, arg, user, chatId) {
       if (u.banned) continue
       const r = await send(u.id, `📣 <b>إعلان</b>\n${LINE}\n${esc(arg)}`)
       if (r) ok++
-      await sleep(60) // احترام حدود تليجرام
+      await sleep(60)
     }
     return send(chatId, `📣 تم الإرسال إلى ${ok} مستخدم.`)
   }
@@ -1319,16 +1278,13 @@ async function handleMessage(msg) {
   const wait = awaiting.get(uid)
   const waiting = wait && Date.now() - wait.at < 5 * 60_000 ? wait.type : null
 
-  // ── أوامر متاحة للجميع (حتى بدون اشتراك) ──
   if (cmd === 'start' || cmd === 'menu') {
-    // رابط البوت المباشر: t.me/bot?start=link يفتح وضع الربط فورًا (وكذلك /start ربط)
     const pay = (arg || '').trim().split(/\s+/)[0]?.toLowerCase() || ''
     if (pay === 'link' || pay === 'ربط') {
       if (!entitled) return show(chatId, null, gateScreen(uid))
       awaiting.set(uid, { type: 'number', at: Date.now() })
       return send(chatId, linkPrompt)
     }
-    // رابط برقم جاهز: t.me/bot?start=201012345678 يبدأ الربط للرقم ده مباشرة
     if (/^\d{6,}$/.test(toEnDigits(pay))) {
       if (!entitled) return show(chatId, null, gateScreen(uid))
       awaiting.delete(uid)
@@ -1347,21 +1303,17 @@ async function handleMessage(msg) {
     return show(chatId, null, codePromptScreen())
   }
 
-  // ── أوامر المسؤول فقط ──
   const adminCmds = ['admin', 'users', 'ban', 'unban', 'stop', 'remove', 'broadcast', 'mode', 'gen', 'grant', 'revoke']
   if (adminCmds.includes(cmd)) {
     if (!isAdmin(uid)) return send(chatId, '⛔ هذا الأمر للمسؤول فقط.')
     return adminCommand(cmd, arg, user, chatId)
   }
-  // مدة مخصصة لإنشاء كود (المسؤول)
   if (waiting === 'custom' && isAdmin(uid) && text && !cmd) {
     const ms = parseDuration(text)
     if (ms === undefined) return send(chatId, '❌ مدة غير مفهومة. أمثلة: <code>45</code> (أيام) — <code>12h</code> — <code>3 شهور</code> — <code>دائم</code>\n(أو /cancel)')
     awaiting.delete(uid)
     return show(chatId, null, genCountScreen(ms === null ? 'perm' : String(Math.round(ms / MIN))))
   }
-
-  // اسم الأمر للتحكم فيه (المسؤول) — تحكم الأوامر
   if (waiting === 'cmdname' && isAdmin(uid) && text && !cmd) {
     const raw = text.replace(/^\.+/, '').trim()
     if (!raw || /\s/.test(raw) || raw.length > 40) return send(chatId, '❌ اكتب اسم الأمر بس من غير مسافات (مثال: <code>شاهد</code>)\n(أو /cancel)')
@@ -1369,7 +1321,6 @@ async function handleMessage(msg) {
     awaiting.delete(uid)
     return show(chatId, null, cmdModeScreen(uid))
   }
-  // مدة مخصصة لأمر تحت التحكم (المسؤول) — تحكم الأوامر
   if (waiting === 'cmddur' && isAdmin(uid) && text && !cmd) {
     const p = pendingCmd.get(uid)
     if (!p) { awaiting.delete(uid); return show(chatId, null, cmdsScreen()) }
@@ -1377,8 +1328,6 @@ async function handleMessage(msg) {
     if (ms === undefined) return send(chatId, '❌ مدة غير مفهومة. أمثلة: <code>45</code> (أيام) — <code>12h</code> — <code>3 شهور</code> — <code>دائم</code>\n(أو /cancel)')
     return finishCmdRule(uid, chatId, p, ms)
   }
-
-  // رقم للترقية في جروب (المسؤول) — عرض الجروبات
   if (waiting === 'promnum' && isAdmin(uid) && text && !cmd) {
     awaiting.delete(uid)
     const g = groupsCache.get(wait.sid)?.list?.[wait.idx]
@@ -1393,8 +1342,6 @@ async function handleMessage(msg) {
       ? `✅ تم ترقية <b>+${esc(number)}</b> إلى مشرف في «${esc(g.name)}»`
       : explainWgErr(r?.error), kb([[btn('⬅️ رجوع', `a:gg:${wait.sid}:${wait.idx}`)]]))
   }
-
-  // رقمك الشخصي (المسؤول) — بيتحفظ مرة واحدة وبعدها الترقية بتتنفذ فورًا
   if (waiting === 'mywa' && isAdmin(uid) && text && !cmd) {
     awaiting.delete(uid)
     const number = normalizeNumber(text)
@@ -1413,13 +1360,11 @@ async function handleMessage(msg) {
       : explainWgErr(r?.error), kb([[btn('⬅️ رجوع', `a:gg:${wait.sid}:${wait.idx}`)]]))
   }
 
-  // ── المستخدم من غير اشتراك فعّال: شاشة الاشتراك + إدخال الكود فقط ──
   if (!entitled) {
     if (text && !cmd && (waiting === 'code' || looksLikeCode(text))) return doRedeem(user, chatId, text, msg.message_id)
     return show(chatId, null, gateScreen(uid))
   }
 
-  // مشترك بيجدد: أي كود يكتبه يتفعّل (يُضاف على المتبقي)
   if (waiting === 'number' && text && !cmd) return startLink(user, chatId, text)
   if (text && !cmd && (waiting === 'code' || looksLikeCode(text))) return doRedeem(user, chatId, text, msg.message_id)
 
@@ -1430,7 +1375,6 @@ async function handleMessage(msg) {
     return send(chatId, linkPrompt)
   }
 
-  // ── انتظار رقم الهاتف ──
   if (waiting === 'number' && text && !cmd) return startLink(user, chatId, text)
 
   if (cmd) return send(chatId, 'أمر غير معروف. اضغط /start', kb([[btn('🏠 الرئيسية', 'home')]]))
@@ -1448,13 +1392,12 @@ async function handleCallback(q) {
   if (user.banned && !isAdmin(uid)) return answer(q.id, '⛔ تم حظرك', true)
   stopTicker(uid)
 
-  // من غير اشتراك: مسموح فقط بالرئيسية/الاشتراك/إدخال الكود/المساعدة/المعرف
   const open = ['home', 'help', 'sub', 'code', 'myid']
   if (!hasAccess(uid) && !open.includes(data)) {
     await answer(q.id, '🔒 لازم تشترك الأول', false)
     return show(chatId, mid, gateScreen(uid), isPhoto)
   }
-  answer(q.id) // بدون انتظار: الرد على الضغطة يمشي بالتوازي مع تنفيذ الأمر
+  answer(q.id)
 
   if (data === 'home') { awaiting.delete(uid); return show(chatId, mid, hasAccess(uid) ? homeScreen(user) : gateScreen(uid), isPhoto) }
   if (data === 'help') return show(chatId, mid, { text: helpText, extra: kb([[btn('🏠 الرئيسية', 'home')]]) }, isPhoto)
@@ -1467,12 +1410,11 @@ async function handleCallback(q) {
     return startTicker(uid, chatId, midOf(m, mid))
   }
 
-  // ── جلسات المستخدم: s:<sid>:<action> ──
   if (data.startsWith('s:')) {
     const [, sid, action] = data.split(':')
     const s = store.sessions[sid]
     if (!s) return show(chatId, mid, sessionsScreen(uid), isPhoto)
-    if (s.tgId !== uid && !isAdmin(uid)) return // لا يتحكم أحد في جلسة غيره
+    if (s.tgId !== uid && !isAdmin(uid)) return
     if (action === 'stop') { await stopProcess(sid); if (s.status === 'linked') { s.status = 'stopped'; saveStore() } return show(chatId, mid, sessionsScreen(s.tgId), isPhoto) }
     if (action === 'start') {
       if (!hasAccess(s.tgId)) return send(chatId, '🔒 صاحب الجلسة دي مالوش اشتراك فعّال.')
@@ -1482,7 +1424,6 @@ async function handleCallback(q) {
     }
     if (action === 'cancel') { if (s.status === 'pending') await destroySession(sid, { logout: false }); return show(chatId, mid, sessionsScreen(s.tgId), isPhoto) }
     if (action === 'del') {
-      // فك الربط بيتطلب موافقة الأدمن الأول (الأدمن نفسه بيتنفذ على طول)
       const needsOk = s.tgId === uid && !isAdmin(uid)
       return show(chatId, mid, {
         text: `🗑 <b>فك الرابط وحذف الجلسة</b>\n${LINE}\nهتتفصل جلسة <b>+${esc(s.number)}</b> من واتساب نهائيًا.\n` +
@@ -1495,7 +1436,6 @@ async function handleCallback(q) {
       }, isPhoto)
     }
     if (action === 'delyes') {
-      // الأدمن بيمسح على طول — العضو بيبعت طلب يوافق عليه الأدمن قبل الفك
       if (isAdmin(uid)) { await destroySession(sid); return show(chatId, mid, sessionsScreen(s.tgId), isPhoto) }
       if (Object.values(store.unlinkReqs).some((r) => r.sid === sid)) {
         return show(chatId, mid, {
@@ -1523,7 +1463,6 @@ async function handleCallback(q) {
     return
   }
 
-  // ── المسؤول فقط ──
   if (data.startsWith('a:')) {
     const [, action, p1, p2, p3] = data.split(':')
     const go = (scr) => show(chatId, mid, scr, isPhoto)
@@ -1539,7 +1478,6 @@ async function handleCallback(q) {
     if (action === 'clist') return go(codesListScreen())
     if (action === 'subs') return go(subsScreen())
 
-    // ── 🎛️ تحكم الأوامر ──
     if (action === 'cmds') return go(cmdsScreen())
     if (action === 'cuser') return go(cmdsUserScreen(p1))
     if (action === 'cadd') { awaiting.set(uid, { type: 'cmdname', at: Date.now(), tgId: p1 }); return send(chatId, cmdNamePrompt(p1), kb([[btn('⬅️ رجوع', `a:cuser:${p1}`)]])) }
@@ -1569,7 +1507,6 @@ async function handleCallback(q) {
     }
     if (action === 'cclear') { delete store.cmdrules[p1]; saveStore(); pushCmdRules(p1); return go(cmdsUserScreen(p1)) }
 
-    // ── 📋 عرض الجروبات + 👑 الترقية ──
     if (action === 'groups') {
       if (p1) return showGroupsList(chatId, mid, p1, isPhoto)
       const linked = Object.values(store.sessions).filter((s) => s.status === 'linked')
@@ -1578,12 +1515,10 @@ async function handleCallback(q) {
       return go(groupsSessionsScreen())
     }
     if (action === 'gpage') {
-      // التنقل بين صفحات الجروبات — الرقم هنا رقم الصفحة مش الجروب
       if (!groupsCache.get(p1)) return showGroupsList(chatId, mid, p1, isPhoto)
       return go(groupsScreen(p1, Math.max(0, Number(p2) || 0)))
     }
     if (action === 'gg') {
-      // الرجوع لصفحة الجروبات لو الفهرس قديم — مش لاختيار الجلسة من جديد
       if (!groupsCache.get(p1)?.list) return go(groupsSessionsScreen())
       if (!groupsCache.get(p1).list[Number(p2)]) return go(groupsScreen(p1, 0))
       return go(groupDetailScreen(p1, p2, uid))
@@ -1593,17 +1528,13 @@ async function handleCallback(q) {
       if (!g) return go(groupsSessionsScreen())
       const s = store.sessions[p1]
       if (!s) return go(groupsSessionsScreen())
-      // واتساب بيشترط مشرفًا موجودًا عشان ينفّذ الترقية — لو رقم الجلسة عضو عادي نوضّح فورًا
       if (g.role === 'member') return send(chatId, memberExplain(s, g), kb([[btn('🔄 تحديث الحالة', `a:groups:${p1}`, 'primary'), btn('⬅️ رجوع', `a:gg:${p1}:${p2}`)]]))
-
       if (p3 === 'num') {
         awaiting.set(uid, { type: 'promnum', at: Date.now(), sid: p1, idx: Number(p2) })
         return send(chatId,
           `🔢 <b>ترقية رقم في «${esc(g.name)}»</b>\n${LINE}\n<blockquote>اكتب رقم واتساب بكود الدولة وبدون +\nمثال: <code>201012345678</code>\n(لازم يكون عضو في الجروب ده)</blockquote>\nللإلغاء: /cancel`,
           kb([[btn('⬅️ رجوع', `a:gg:${p1}:${p2}`)]]))
       }
-
-      // 👑 ترقيتي أنا: الجلسة (وهي مشرف) بترقّي رقمك الشخصي جنبها
       const myWa = store.adminWa?.[uid]
       if (!myWa) {
         awaiting.set(uid, { type: 'mywa', at: Date.now(), sid: p1, idx: Number(p2) })
@@ -1679,7 +1610,6 @@ async function handleCallback(q) {
     }
     if (action === 'subrmyes') { await revokeSub(p1, chatId); return go(subsScreen()) }
 
-    // ── 🔓 طلبات فك الرابط ──
     if (action === 'ulreqs') return go(unlinkReqsScreen())
     if (action === 'ulok' || action === 'ulno') {
       const r = store.unlinkReqs[p1]
@@ -1774,8 +1704,7 @@ process.on('exit', releaseLock)
 
 async function main() {
   const me = await tg('getMe').catch((e) => { console.log('❌ فشل الاتصال بتليجرام: ' + e.message + '\nتأكد من التوكن ومن الإنترنت.'); process.exit(1) })
-  BOT_USERNAME = me?.username || null // لرابط البوت المباشر (t.me/...?start=link)
-  // سحب أي webhook قديم حتى يعمل getUpdates
+  BOT_USERNAME = me?.username || null
   await tg('deleteWebhook', { drop_pending_updates: false }).catch(() => { })
   const userCmds = [
     { command: 'start', description: 'القائمة الرئيسية' },
@@ -1798,7 +1727,6 @@ async function main() {
     ] }).catch(() => { })
   }
 
-  // تنظيف محاولات الربط غير المكتملة، ثم إنهاء الاشتراكات المنتهية، ثم استعادة الجلسات المسموح لها
   for (const s of Object.values(store.sessions)) {
     if (s.status === 'pending') await destroySession(s.id, { logout: false })
   }
