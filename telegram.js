@@ -113,7 +113,13 @@ fs.mkdirSync(path.join(DATA_DIR, 'logs'), { recursive: true })
 // settings.paid = هل البوت بنظام الاشتراك؟
 const STORE_FILE = path.join(DATA_DIR, 'store.json')
 let store = { users: {}, sessions: {}, codes: {}, cmdrules: {}, adminWa: {}, settings: { paid: false } }
-try { if (fs.existsSync(STORE_FILE)) store = { ...store, ...JSON.parse(fs.readFileSync(STORE_FILE, 'utf8')) } catch { }
+try {
+  if (fs.existsSync(STORE_FILE)) {
+    store = { ...store, ...JSON.parse(fs.readFileSync(STORE_FILE, 'utf8')) };
+  }
+} catch (e) {
+  console.log('⚠️ تعذر قراءة الملف: ' + e.message);
+}
 store.users ||= {}; store.sessions ||= {}; store.codes ||= {}
 store.cmdrules = { ...(store.cmdrules || {}) }
 store.adminWa = { ...(store.adminWa || {}) }
