@@ -16,8 +16,8 @@ const __dir = path.dirname(fileURLToPath(import.meta.url))
 // ───────────────────────── الإعدادات ─────────────────────────
 const CONFIG_FILE = path.join(__dir, 'config.json')
 const TEMPLATE = {
-  telegramToken: 'ضع_توكن_البوت_هنا',
-  adminIds: ['ضع_معرفك_الرقمي_هنا'],
+  telegramToken: '9038686507:AAH0JQ4Jn4KgvAM2pcj2cKu4rh7e6xKSXOI',
+  adminIds: ['1879155157'],
   adminContact: '',
   maxSessionsPerUser: 1,
   maxTotalSessions: 15,
