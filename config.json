@@ -1,0 +1,12 @@
+{
+  "telegramToken": "9038686507:AAH0JQ4Jn4KgvAM2pcj2cKu4rh7e6xKSXOI",
+  "adminIds": [
+    "1879155157"
+  ],
+  "maxSessionsPerUser": 1,
+  "maxTotalSessions": 200,
+  "defaultCountryCode": "20",
+  "developerWhatsApp": "",
+  "adminContact": "",
+  "timezone": "Africa/Cairo"
+}

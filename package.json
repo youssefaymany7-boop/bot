@@ -1,0 +1,20 @@
+{
+  "name": "mr-joo-bot",
+  "version": "1.0.0",
+  "description": "MR JOO — بوت واتساب للحماية والإدارة والموسيقى مع مدير جلسات عبر تليجرام",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node telegram.js",
+    "telegram": "node telegram.js",
+    "bot": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "latest",
+    "pino": "^9.0.0"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules
+session
+db.json
+.env
+store
+ytmusic.txt
+ytcook.txt
+config.json
+data

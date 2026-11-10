@@ -1,0 +1,10 @@
+{
+  "telegramToken": "ضع_توكن_البوت_هنا",
+  "adminIds": ["ضع_معرفك_الرقمي_هنا"],
+  "adminContact": "username_بتاع_الأدمن",
+  "maxSessionsPerUser": 1,
+  "maxTotalSessions": 15,
+  "defaultCountryCode": "20",
+  "developerWhatsApp": "",
+  "timezone": "Africa/Cairo"
+}
